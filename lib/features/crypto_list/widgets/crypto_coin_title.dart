@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class crypto_coin_title extends StatelessWidget {
-  const crypto_coin_title({
+class CryptoCoinTitle extends StatelessWidget {
+  const CryptoCoinTitle({
     super.key,
     required this.coinName,
   });
