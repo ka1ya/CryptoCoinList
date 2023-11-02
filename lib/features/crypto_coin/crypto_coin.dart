@@ -1,0 +1,1 @@
+export 'view/veiw.dart';
