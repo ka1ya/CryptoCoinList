@@ -1,7 +1,10 @@
+import 'package:crypto_coin_list/features/crypto_list/bloc/crypto_list_bloc.dart';
 import 'package:crypto_coin_list/features/crypto_list/widgets/widgets.dart';
-import 'package:crypto_coin_list/repositoies/crypto_coins/crypto_coin_repositories.dart';
-import 'package:crypto_coin_list/repositoies/crypto_coins/models/crypto_coin.dart';
+import 'package:crypto_coin_list/repositoies/crypto_coins/crypto_coins.dart';
+import 'package:crypto_coin_list/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
 class CryptoListScreen extends StatefulWidget {
   const CryptoListScreen({super.key});
@@ -10,44 +13,64 @@ class CryptoListScreen extends StatefulWidget {
 }
 
 class _CryptoListScreenState extends State<CryptoListScreen> {
-  List<CryptoCoin>? _cryptoCoinsList;
+  final _cryptoListBloc = CryptoListBloc(
+    GetIt.I<AbstractCoinsRepositories>(),
+  );
 
   @override
   void initState() {
-    _loadCryptoData();
+    _cryptoListBloc.add(ListCryptoList());
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Center(
-          child: Text(
-            'Crypto Currencies List',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 22,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Center(
+            child: Text(
+              'Crypto Currencies List',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
+              ),
             ),
           ),
         ),
-      ),
-      body: (_cryptoCoinsList == null)
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.separated(
-              itemCount: _cryptoCoinsList!.length,
-              separatorBuilder: (context, index) => const Divider(),
-              itemBuilder: (context, i) {
-                final coin = _cryptoCoinsList![i];
-                return CryptoCoinTitle(coin: coin);
-              },
-            ),
-    );
-  }
-
-  Future<void> _loadCryptoData() async {
-    _cryptoCoinsList = await CryptoCoinRepository().getCoinList();
-    setState(() {});
+        body: BlocBuilder<CryptoListBloc, CryptoListState>(
+          bloc: _cryptoListBloc,
+          builder: (context, state) {
+            if (state is CryptoListLoaded) {
+              return ListView.separated(
+                itemCount: state.coinsList.length,
+                separatorBuilder: (context, index) => const Divider(),
+                itemBuilder: (context, i) {
+                  final coin = state.coinsList[i];
+                  return CryptoCoinTitle(coin: coin);
+                },
+              );
+            }
+            if (state is CryptoListLoadingFailure) {
+              return Center(
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Something goes wrong',
+                        style: darkTheme.textTheme.headlineMedium,
+                      ),
+                      Text(
+                        'Please try again later',
+                        style: darkTheme.textTheme.labelSmall
+                            ?.copyWith(fontSize: 16),
+                      )
+                    ]),
+              );
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
+        ));
   }
 }
